@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ProductHub</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">🛍️ ProductHub</div>
+
+        <nav>
+            <a href="#">Dashboard</a>
+            <a href="#">Products</a>
+        </nav>
+    </header>
+
+
+    <main>
+
+        <section class="hero">
+            <h1>Product Management</h1>
+            <p>Manage your products easily</p>
+        </section>
+
+
+        <section class="form-section">
+
+            <input
+                type="text"
+                id="productName"
+                placeholder="Product Name"
+            >
+
+            <input
+                type="number"
+                id="productPrice"
+                placeholder="Price"
+            >
+
+            <input
+                type="text"
+                id="productCategory"
+                placeholder="Category"
+            >
+
+            <input
+                type="text"
+            
+                id="productImage"
+                placeholder="Product Image URL"
+            >
+
+            <button onclick="addProduct()">
+                Add Product
+            </button>
+
+        </section>
+
+
+        <section>
+
+            <h2>Products</h2>
+
+            <div id="productList"></div>
+
+        </section>
+
+    </main>
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
