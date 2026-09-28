@@ -1,10 +1,8 @@
+
 import "./App.css";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 
-import smartwatchImage from "./assets/smartwatch.jpg";
-import sneakersImage from "./assets/sneakers.jpg";
-import perfumeImage from "./assets/perfume.jpg";
 import heroImage from "./assets/hero.jpg";
 
 interface Product {
@@ -12,6 +10,7 @@ interface Product {
   name: string;
   price: number;
   category: string;
+  image_url: string | null;
 }
 
 const API_URL = "http://localhost:5000/api";
@@ -21,6 +20,11 @@ function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Search, category filter and sorting
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [sort, setSort] = useState("default");
 
   // Admin authentication
   const [token, setToken] = useState(
@@ -37,28 +41,49 @@ function App() {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formMessage, setFormMessage] = useState("");
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Fetch products from backend
-  const fetchProducts = async () => {
+  // Fetch products from backend with search, category and sorting
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/products`);
+      const queryParams = new URLSearchParams();
+
+      if (search.trim()) {
+        queryParams.append("search", search.trim());
+      }
+
+      if (selectedCategory !== "All") {
+        queryParams.append("category", selectedCategory);
+      }
+
+      if (sort !== "default") {
+        queryParams.append("sort", sort);
+      }
+
+      const queryString = queryParams.toString();
+
+      const url = queryString
+        ? `${API_URL}/products?${queryString}`
+        : `${API_URL}/products`;
+
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error("Failed to fetch products");
       }
 
-      const data = await response.json();
+      const data: Product[] = await response.json();
 
       // MySQL DECIMAL values may arrive as strings
       const formattedProducts: Product[] = data.map(
-        (product: Product) => ({
+        (product) => ({
           ...product,
           price: Number(product.price),
         })
@@ -71,28 +96,25 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, selectedCategory, sort]);
 
+  // Load products whenever search, category or sorting changes
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [fetchProducts]);
 
-  // Product image based on ID
-  const getProductImage = (id: number): string => {
-    switch (id) {
-      case 1:
-        return smartwatchImage;
-      case 2:
-        return sneakersImage;
-      case 3:
-        return perfumeImage;
-      default:
-        return "";
-    }
-  };
+  // Get categories for dropdown
+  const categories = [
+    "All",
+    ...Array.from(
+      new Set(products.map((product) => product.category))
+    ).filter((category) => category !== "All"),
+  ];
 
   // Admin login
-  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (
+    event: FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
 
     setLoginError("");
@@ -150,6 +172,7 @@ function App() {
     setName("");
     setPrice("");
     setCategory("");
+    setImageUrl("");
     setEditingId(null);
   };
 
@@ -180,6 +203,7 @@ function App() {
       name: name.trim(),
       price: numericPrice,
       category: category.trim(),
+      image_url: imageUrl.trim() || null,
     };
 
     const isEditing = editingId !== null;
@@ -218,6 +242,8 @@ function App() {
       );
 
       resetForm();
+
+      // Refresh products using current filters
       await fetchProducts();
     } catch (err) {
       console.error("Product save error:", err);
@@ -233,6 +259,7 @@ function App() {
     setName(product.name);
     setPrice(String(product.price));
     setCategory(product.category);
+    setImageUrl(product.image_url || "");
     setFormMessage("");
     setFormError("");
 
@@ -276,6 +303,8 @@ function App() {
       }
 
       setFormMessage("Product deleted successfully!");
+
+      // Refresh products using current filters
       await fetchProducts();
     } catch (err) {
       console.error("Delete error:", err);
@@ -327,7 +356,9 @@ function App() {
                 id="admin-username"
                 type="text"
                 value={username}
-                onChange={(event) => setUsername(event.target.value)}
+                onChange={(event) =>
+                  setUsername(event.target.value)
+                }
                 placeholder="Enter admin username"
                 required
               />
@@ -337,7 +368,9 @@ function App() {
                 id="admin-password"
                 type="password"
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                onChange={(event) =>
+                  setPassword(event.target.value)
+                }
                 placeholder="Enter admin password"
                 required
               />
@@ -415,10 +448,60 @@ function App() {
                 id="product-category"
                 type="text"
                 value={category}
-                onChange={(event) => setCategory(event.target.value)}
+                onChange={(event) =>
+                  setCategory(event.target.value)
+                }
                 placeholder="Enter category"
                 required
               />
+
+             <label htmlFor="product-image-url">
+  Product Image URL
+</label>
+
+<input
+  id="product-image-url"
+  type="text"
+  value={imageUrl}
+  onChange={(event) => setImageUrl(event.target.value)}
+  placeholder=""
+/>
+
+{imageUrl.trim() && (
+  <div className="admin-image-preview">
+    <p>Image Preview</p>
+    <img
+      src={
+        imageUrl.trim().startsWith("http")
+          ? imageUrl.trim()
+          : `http://localhost:5000${imageUrl.trim().startsWith("/") ? "" : "/"}${imageUrl.trim()}`
+      }
+      alt="Product preview"
+      style={{
+        width: "120px",
+        height: "100px",
+        objectFit: "contain",
+      }}
+    />
+  </div>
+)}     {imageUrl.trim() && (
+                <div className="admin-image-preview">
+                  <p>Image Preview</p>
+                  <img
+                    src={
+                      imageUrl.trim().startsWith("http")
+                        ? imageUrl.trim()
+                        : `http://localhost:5000${imageUrl.trim().startsWith("/") ? "" : "/"}${imageUrl.trim()}`
+                    }
+                    alt="Product preview"
+                    style={{
+                      width: "120px",
+                      height: "100px",
+                      objectFit: "contain",
+                    }}
+                  />
+                </div>
+              )}
 
               {formMessage && (
                 <p className="admin-success">{formMessage}</p>
@@ -485,23 +568,80 @@ function App() {
       <section id="products" className="products-section">
         <h2>Featured Products</h2>
 
+        {/* Search, Category Filter and Sorting */}
+        <div className="product-filters">
+          <input
+            type="text"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search products..."
+            aria-label="Search products"
+          />
+
+          <select
+            value={selectedCategory}
+            onChange={(event) =>
+              setSelectedCategory(event.target.value)
+            }
+            aria-label="Filter by category"
+          >
+            {categories.map((item) => (
+              <option key={item} value={item}>
+                {item === "All" ? "All Categories" : item}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={sort}
+            onChange={(event) => setSort(event.target.value)}
+            aria-label="Sort products by price"
+          >
+            <option value="default">Default Sorting</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+          </select>
+
+          <button
+            type="button"
+            onClick={() => {
+              setSearch("");
+              setSelectedCategory("All");
+              setSort("default");
+            }}
+          >
+            Clear Filters
+          </button>
+        </div>
+
         {loading && <p>Loading products...</p>}
 
         {error && <p>{error}</p>}
 
-        {!loading && !error && (
+        {!loading && !error && products.length === 0 && (
+          <p>No products found. Try changing your filters.</p>
+        )}
+
+        {!loading && !error && products.length > 0 && (
           <div className="products-grid">
             {products.map((product) => (
               <div className="product-card" key={product.id}>
-                <img
-                  src={getProductImage(product.id)}
-                  alt={product.name}
-                />
+                {product.image_url && (
+                  <img
+                    src={
+                      product.image_url.startsWith("http")
+                        ? product.image_url
+                        : `http://localhost:5000${product.image_url.startsWith("/") ? "" : "/"}${product.image_url}`
+                    }
+                    alt={product.name}
+                    loading="lazy"
+                  />
+                )}
 
                 <div className="product-info">
                   <p>{product.category}</p>
                   <h3>{product.name}</h3>
-                  <h4>₹{product.price}</h4>
+                  <h4>₹{product.price.toLocaleString("en-IN")}</h4>
 
                   <button>Add to Cart</button>
                 </div>

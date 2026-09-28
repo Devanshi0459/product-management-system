@@ -19,7 +19,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -443,6 +444,126 @@ a {
   color: #25213b;
 }
 
+/* =====================================
+   SEARCH, CATEGORY FILTER & SORTING
+===================================== */
+
+.product-filters {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 15px;
+
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 35px;
+  padding: 20px;
+
+  background: #ffffff;
+  border: 1px solid #ebe6f5;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(40, 30, 70, 0.06);
+}
+
+/* Search input */
+
+.product-filters input {
+  flex: 1;
+  min-width: 220px;
+  max-width: 400px;
+  height: 48px;
+
+  padding: 0 16px;
+
+  border: 1px solid #ddd6ef;
+  border-radius: 10px;
+  outline: none;
+
+  background: #faf9ff;
+  color: #25213b;
+  font-size: 15px;
+
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.product-filters input::placeholder {
+  color: #999;
+}
+
+.product-filters input:focus {
+  border-color: #6c3ce9;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(108, 60, 233, 0.12);
+}
+
+/* Category and Sorting dropdowns */
+
+.product-filters select {
+  min-width: 180px;
+  height: 48px;
+
+  padding: 0 38px 0 15px;
+
+  border: 1px solid #ddd6ef;
+  border-radius: 10px;
+  outline: none;
+
+  background-color: #faf9ff;
+  color: #37304f;
+  font-size: 15px;
+
+  cursor: pointer;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.product-filters select:focus {
+  border-color: #6c3ce9;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(108, 60, 233, 0.12);
+}
+
+.product-filters select:hover {
+  border-color: #a28ae8;
+}
+
+/* Clear Filters button */
+
+.product-filters button {
+  height: 48px;
+  padding: 0 22px;
+
+  border: 2px solid #6c3ce9;
+  border-radius: 10px;
+
+  background: #ffffff;
+  color: #6c3ce9;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  white-space: nowrap;
+  cursor: pointer;
+
+  transition: all 0.3s ease;
+}
+
+.product-filters button:hover {
+  background: #6c3ce9;
+  color: #ffffff;
+
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(108, 60, 233, 0.2);
+}
+
+.product-filters button:active {
+  transform: translateY(0);
+}
+
+/* =====================================
+   PRODUCTS GRID
+===================================== */
+
 .products-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -491,7 +612,7 @@ a {
 }
 
 /* =====================================
-   RESPONSIVE DESIGN
+   RESPONSIVE DESIGN - TABLET
 ===================================== */
 
 @media (max-width: 900px) {
@@ -519,7 +640,25 @@ a {
   .products-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .product-filters {
+    gap: 12px;
+  }
+
+  .product-filters input {
+    max-width: 100%;
+    flex-basis: 100%;
+  }
+
+  .product-filters select {
+    flex: 1;
+    min-width: 160px;
+  }
 }
+
+/* =====================================
+   RESPONSIVE DESIGN - MOBILE
+===================================== */
 
 @media (max-width: 600px) {
   .navbar {
@@ -616,6 +755,29 @@ a {
 
   .products-section > h2 {
     font-size: 26px;
+    margin-bottom: 25px;
+  }
+
+  /* Mobile filters */
+
+  .product-filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+
+    padding: 18px;
+    margin-bottom: 25px;
+
+    border-radius: 12px;
+  }
+
+  .product-filters input,
+  .product-filters select,
+  .product-filters button {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    flex: none;
   }
 
   .products-grid {

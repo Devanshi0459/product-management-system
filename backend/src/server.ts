@@ -1,8 +1,10 @@
+
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
+import path from "path";
 import type { Request, Response, NextFunction } from "express";
 import pool from "./db";
 
@@ -20,13 +22,27 @@ if (!ADMIN_USERNAME || !ADMIN_PASSWORD || !JWT_SECRET) {
   );
 }
 
-// Hash the admin password when the server starts
+// Hash admin password when server starts
 const adminPasswordHash = bcrypt.hashSync(ADMIN_PASSWORD, 10);
 
 app.use(cors());
 app.use(express.json());
 
-// Home route
+// =====================================
+// SERVE PRODUCT IMAGES
+// =====================================
+
+app.use(
+  "/images",
+  express.static(
+    path.join(process.cwd(), "public", "images")
+  )
+);
+
+// =====================================
+// HOME ROUTE
+// =====================================
+
 app.get("/", (req, res) => {
   res.send("ProductHub Backend is Running!");
 });
@@ -34,6 +50,7 @@ app.get("/", (req, res) => {
 // =====================================
 // ADMIN LOGIN API
 // =====================================
+
 app.post("/api/admin/login", async (req, res) => {
   const { username, password } = req.body;
 
@@ -48,14 +65,12 @@ app.post("/api/admin/login", async (req, res) => {
     });
   }
 
-  // Check admin username
   if (username !== ADMIN_USERNAME) {
     return res.status(401).json({
       message: "Invalid username or password",
     });
   }
 
-  // Compare password securely
   const isPasswordValid = await bcrypt.compare(
     password,
     adminPasswordHash
@@ -67,7 +82,6 @@ app.post("/api/admin/login", async (req, res) => {
     });
   }
 
-  // Generate JWT token
   const token = jwt.sign(
     { role: "admin" },
     JWT_SECRET,
@@ -83,6 +97,7 @@ app.post("/api/admin/login", async (req, res) => {
 // =====================================
 // ADMIN AUTHENTICATION MIDDLEWARE
 // =====================================
+
 function requireAdmin(
   req: Request,
   res: Response,
@@ -90,7 +105,6 @@ function requireAdmin(
 ) {
   const authHeader = req.headers.authorization;
 
-  // Token should be sent as: Bearer <token>
   const token = authHeader?.startsWith("Bearer ")
     ? authHeader.slice(7)
     : "";
@@ -123,19 +137,58 @@ function requireAdmin(
 
 // =====================================
 // GET API - PUBLIC
-// Fetch all products from MySQL
+// Fetch, Search, Filter, Sort and Images
 // =====================================
+
 app.get("/api/products", async (req, res) => {
   try {
-    const [rows] = await pool.query(
-      "SELECT * FROM products ORDER BY id ASC"
-    );
+    const search =
+      typeof req.query.search === "string"
+        ? req.query.search.trim()
+        : "";
 
-    res.status(200).json(rows);
+    const category =
+      typeof req.query.category === "string"
+        ? req.query.category.trim()
+        : "";
+
+    const sort =
+      typeof req.query.sort === "string"
+        ? req.query.sort
+        : "default";
+
+    let sql = "SELECT * FROM products WHERE 1=1";
+
+    const params: string[] = [];
+
+    // Search by product name
+    if (search) {
+      sql += " AND name LIKE ?";
+      params.push(`%${search}%`);
+    }
+
+    // Filter by category
+    if (category && category !== "All") {
+      sql += " AND category = ?";
+      params.push(category);
+    }
+
+    // Sort by price
+    if (sort === "price_asc") {
+      sql += " ORDER BY price ASC, id ASC";
+    } else if (sort === "price_desc") {
+      sql += " ORDER BY price DESC, id ASC";
+    } else {
+      sql += " ORDER BY id ASC";
+    }
+
+    const [rows] = await pool.execute(sql, params);
+
+    return res.status(200).json(rows);
   } catch (error) {
     console.error("Error fetching products:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       message: "Failed to fetch products",
     });
   }
@@ -143,13 +196,14 @@ app.get("/api/products", async (req, res) => {
 
 // =====================================
 // POST API - ADMIN ONLY
-// Add a new product
+// Add a new product with image URL
 // =====================================
+
 app.post(
   "/api/products",
   requireAdmin,
   async (req, res) => {
-    const { name, price, category } = req.body;
+    const { name, price, category, image_url } = req.body;
 
     if (
       typeof name !== "string" ||
@@ -165,27 +219,50 @@ app.post(
       });
     }
 
+    if (
+      image_url !== undefined &&
+      image_url !== null &&
+      typeof image_url !== "string"
+    ) {
+      return res.status(400).json({
+        message: "Image URL must be a string",
+      });
+    }
+
+    const imageUrl =
+      typeof image_url === "string" && image_url.trim()
+        ? image_url.trim()
+        : null;
+
     try {
       const [result] = await pool.execute(
-        "INSERT INTO products (name, price, category) VALUES (?, ?, ?)",
-        [name.trim(), price, category.trim()]
+        `INSERT INTO products
+         (name, price, category, image_url)
+         VALUES (?, ?, ?, ?)`,
+        [
+          name.trim(),
+          price,
+          category.trim(),
+          imageUrl,
+        ]
       );
 
       const insertId = (result as any).insertId;
 
-      res.status(201).json({
+      return res.status(201).json({
         message: "Product added successfully",
         product: {
           id: insertId,
           name: name.trim(),
           price,
           category: category.trim(),
+          image_url: imageUrl,
         },
       });
     } catch (error) {
       console.error("Error adding product:", error);
 
-      res.status(500).json({
+      return res.status(500).json({
         message: "Failed to add product",
       });
     }
@@ -196,12 +273,14 @@ app.post(
 // PUT API - ADMIN ONLY
 // Update an existing product
 // =====================================
+
 app.put(
   "/api/products/:id",
   requireAdmin,
   async (req, res) => {
     const id = Number(req.params.id);
-    const { name, price, category } = req.body;
+
+    const { name, price, category, image_url } = req.body;
 
     if (!Number.isInteger(id) || id <= 0) {
       return res.status(400).json({
@@ -223,33 +302,66 @@ app.put(
       });
     }
 
+    if (
+      image_url !== undefined &&
+      image_url !== null &&
+      typeof image_url !== "string"
+    ) {
+      return res.status(400).json({
+        message: "Image URL must be a string",
+      });
+    }
+
+    const imageUrl =
+      typeof image_url === "string" && image_url.trim()
+        ? image_url.trim()
+        : null;
+
     try {
       const [result] = await pool.execute(
-        "UPDATE products SET name = ?, price = ?, category = ? WHERE id = ?",
-        [name.trim(), price, category.trim(), id]
+        `UPDATE products
+         SET name = ?,
+             price = ?,
+             category = ?,
+             image_url = COALESCE(?, image_url)
+         WHERE id = ?`,
+        [
+          name.trim(),
+          price,
+          category.trim(),
+          imageUrl,
+          id,
+        ]
       );
 
       const affectedRows = (result as any).affectedRows;
 
       if (affectedRows === 0) {
-        return res.status(404).json({
-          message: "Product not found",
-        });
+        const [existingRows] = await pool.execute(
+          "SELECT id FROM products WHERE id = ?",
+          [id]
+        );
+
+        if ((existingRows as any[]).length === 0) {
+          return res.status(404).json({
+            message: "Product not found",
+          });
+        }
       }
 
-      res.status(200).json({
+      const [updatedRows] = await pool.execute(
+        "SELECT * FROM products WHERE id = ?",
+        [id]
+      );
+
+      return res.status(200).json({
         message: "Product updated successfully",
-        product: {
-          id,
-          name: name.trim(),
-          price,
-          category: category.trim(),
-        },
+        product: (updatedRows as any[])[0],
       });
     } catch (error) {
       console.error("Error updating product:", error);
 
-      res.status(500).json({
+      return res.status(500).json({
         message: "Failed to update product",
       });
     }
@@ -260,6 +372,7 @@ app.put(
 // DELETE API - ADMIN ONLY
 // Delete a product
 // =====================================
+
 app.delete(
   "/api/products/:id",
   requireAdmin,
@@ -293,14 +406,14 @@ app.delete(
         [id]
       );
 
-      res.status(200).json({
+      return res.status(200).json({
         message: "Product deleted successfully",
         product: deletedProduct,
       });
     } catch (error) {
       console.error("Error deleting product:", error);
 
-      res.status(500).json({
+      return res.status(500).json({
         message: "Failed to delete product",
       });
     }
@@ -310,6 +423,7 @@ app.delete(
 // =====================================
 // START SERVER
 // =====================================
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
