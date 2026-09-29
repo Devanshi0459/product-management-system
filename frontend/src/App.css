@@ -784,3 +784,251 @@ a {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* =====================================
+   ADMIN PRODUCT TABLE - PROFESSIONAL UI
+===================================== */
+
+.admin-table-controls {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: 0 0 20px;
+  padding: 18px 20px;
+  background: #faf9ff;
+  border: 1px solid #e8e1fa;
+  border-radius: 12px;
+}
+
+.admin-table-controls > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-table-controls label {
+  color: #37304f;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-table-controls select {
+  min-width: 180px;
+  height: 44px;
+  padding: 0 38px 0 14px;
+  border: 1px solid #ddd6ef;
+  border-radius: 8px;
+  background: #fff;
+  color: #30264b;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.admin-table-controls select:focus {
+  border-color: #6c3ce9;
+  box-shadow: 0 0 0 3px rgba(108, 60, 233, 0.12);
+}
+
+.admin-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e8e1fa;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(40, 30, 70, 0.05);
+}
+
+.admin-products-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: #37304f;
+  font-size: 15px;
+}
+
+.admin-products-table thead {
+  background: #f0ebff;
+}
+
+.admin-products-table th {
+  padding: 17px 18px;
+  text-align: left;
+  color: #4b328c;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  border-bottom: 1px solid #e2d8ff;
+}
+
+.admin-products-table td {
+  padding: 16px 18px;
+  border-bottom: 1px solid #eeeaf5;
+  vertical-align: middle;
+}
+
+.admin-products-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-products-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.admin-products-table tbody tr:hover {
+  background: #faf8ff;
+}
+
+.admin-products-table td:first-child {
+  color: #77708b;
+  font-weight: 600;
+}
+
+.admin-products-table td:nth-child(2) {
+  color: #30264b;
+  font-weight: 600;
+  min-width: 190px;
+}
+
+.admin-products-table td:nth-child(3) {
+  color: #6f6685;
+}
+
+.admin-products-table td:nth-child(4) {
+  color: #6c3ce9;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.admin-products-table td button {
+  min-width: 76px;
+  padding: 9px 15px;
+  border: none;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.admin-products-table td button:hover {
+  transform: translateY(-1px);
+}
+
+.admin-products-table td button:first-child {
+  background: #eee8ff;
+  color: #6335d4;
+}
+
+.admin-products-table td button:first-child:hover {
+  background: #ddd1ff;
+}
+
+.admin-products-table td button:last-child {
+  background: #fff0f0;
+  color: #c62828;
+}
+
+.admin-products-table td button:last-child:hover {
+  background: #ffdada;
+}
+
+.admin-products-table td[colspan] {
+  padding: 35px 20px;
+  text-align: center;
+  color: #77708b;
+}
+
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.admin-pagination > p {
+  margin: 0;
+  color: #77708b;
+  font-size: 14px;
+}
+
+.pagination-buttons {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.pagination-buttons button {
+  min-width: 40px;
+  height: 40px;
+  padding: 0 13px;
+  border: 1px solid #ddd6ef;
+  border-radius: 8px;
+  background: #fff;
+  color: #554875;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pagination-buttons button:hover:not(:disabled) {
+  border-color: #6c3ce9;
+  background: #f3efff;
+  color: #6c3ce9;
+}
+
+.pagination-buttons button.active-page {
+  border-color: #6c3ce9;
+  background: #6c3ce9;
+  color: #fff;
+  box-shadow: 0 3px 8px rgba(108, 60, 233, 0.2);
+}
+
+.pagination-buttons button:disabled {
+  border-color: #e8e4f1;
+  background: #f5f4f8;
+  color: #aaa4b8;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .admin-table-controls {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .admin-table-controls > div,
+  .admin-table-controls select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .admin-products-table {
+    min-width: 680px;
+  }
+
+  .admin-products-table th,
+  .admin-products-table td {
+    padding: 13px 14px;
+  }
+
+  .admin-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pagination-buttons {
+    width: 100%;
+  }
+
+  .pagination-buttons button {
+    flex: 1;
+  }
+}

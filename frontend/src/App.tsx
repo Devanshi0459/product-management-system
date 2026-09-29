@@ -47,6 +47,15 @@ function App() {
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Admin products table
+  const [adminProducts, setAdminProducts] = useState<Product[]>([]);
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [adminError, setAdminError] = useState("");
+  const [adminCategory, setAdminCategory] = useState("All");
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSizeOptions = [5, 10, 15, 20, 25, 35];
+
   // Fetch products from backend with search, category and sorting
   const fetchProducts = useCallback(async () => {
     try {
@@ -103,6 +112,34 @@ function App() {
     fetchProducts();
   }, [fetchProducts]);
 
+  // Fetch all products for the Admin Dashboard (independent of storefront filters)
+  const fetchAdminProducts = useCallback(async () => {
+    try {
+      setAdminLoading(true);
+      setAdminError("");
+      const response = await fetch(`${API_URL}/products`);
+      if (!response.ok) throw new Error("Failed to fetch admin products");
+      const data: Product[] = await response.json();
+      setAdminProducts(data.map((product) => ({
+        ...product,
+        price: Number(product.price),
+      })));
+    } catch (err) {
+      console.error("Admin products error:", err);
+      setAdminError("Unable to load admin products.");
+    } finally {
+      setAdminLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (token) {
+      fetchAdminProducts();
+    } else {
+      setAdminProducts([]);
+    }
+  }, [token, fetchAdminProducts]);
+
   // Get categories for dropdown
   const categories = [
     "All",
@@ -110,6 +147,43 @@ function App() {
       new Set(products.map((product) => product.category))
     ).filter((category) => category !== "All"),
   ];
+
+  // Admin table category filter and pagination
+  const adminCategories = [
+    "All",
+    ...Array.from(
+      new Set(adminProducts.map((product) => product.category))
+    ).filter((item) => item !== "All"),
+  ];
+
+  const filteredAdminProducts = adminProducts.filter((product) =>
+    adminCategory === "All" || product.category === adminCategory
+  );
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredAdminProducts.length / rowsPerPage)
+  );
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * rowsPerPage;
+  const paginatedAdminProducts = filteredAdminProducts.slice(
+    startIndex,
+    startIndex + rowsPerPage
+  );
+
+  // Show only nearby page numbers instead of every page number.
+  const paginationPages: (number | "ellipsis")[] = [];
+  if (totalPages <= 5) {
+    for (let page = 1; page <= totalPages; page += 1) {
+      paginationPages.push(page);
+    }
+  } else if (safeCurrentPage <= 3) {
+    paginationPages.push(1, 2, 3, 4, "ellipsis", totalPages);
+  } else if (safeCurrentPage >= totalPages - 2) {
+    paginationPages.push(1, "ellipsis", totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+  } else {
+    paginationPages.push(1, "ellipsis", safeCurrentPage - 1, safeCurrentPage, safeCurrentPage + 1, "ellipsis", totalPages);
+  }
 
   // Admin login
   const handleLogin = async (
@@ -243,8 +317,9 @@ function App() {
 
       resetForm();
 
-      // Refresh products using current filters
-      await fetchProducts();
+      // Refresh storefront and admin table
+      await Promise.all([fetchProducts(), fetchAdminProducts()]);
+      setCurrentPage(1);
     } catch (err) {
       console.error("Product save error:", err);
       setFormError("Unable to connect to the server.");
@@ -304,8 +379,9 @@ function App() {
 
       setFormMessage("Product deleted successfully!");
 
-      // Refresh products using current filters
-      await fetchProducts();
+      // Refresh storefront and admin table
+      await Promise.all([fetchProducts(), fetchAdminProducts()]);
+      setCurrentPage(1);
     } catch (err) {
       console.error("Delete error:", err);
       setFormError("Unable to connect to the server.");
@@ -455,36 +531,16 @@ function App() {
                 required
               />
 
-             <label htmlFor="product-image-url">
-  Product Image URL
-</label>
+              <label htmlFor="product-image-url">Product Image URL</label>
+              <input
+                id="product-image-url"
+                type="text"
+                value={imageUrl}
+                onChange={(event) => setImageUrl(event.target.value)}
+                placeholder="Enter image URL or upload path"
+              />
 
-<input
-  id="product-image-url"
-  type="text"
-  value={imageUrl}
-  onChange={(event) => setImageUrl(event.target.value)}
-  placeholder=""
-/>
-
-{imageUrl.trim() && (
-  <div className="admin-image-preview">
-    <p>Image Preview</p>
-    <img
-      src={
-        imageUrl.trim().startsWith("http")
-          ? imageUrl.trim()
-          : `http://localhost:5000${imageUrl.trim().startsWith("/") ? "" : "/"}${imageUrl.trim()}`
-      }
-      alt="Product preview"
-      style={{
-        width: "120px",
-        height: "100px",
-        objectFit: "contain",
-      }}
-    />
-  </div>
-)}     {imageUrl.trim() && (
+              {imageUrl.trim() && (
                 <div className="admin-image-preview">
                   <p>Image Preview</p>
                   <img
@@ -535,31 +591,122 @@ function App() {
           <div className="admin-product-list">
             <h3>Manage Products</h3>
 
-            {products.map((product) => (
-              <div
-                className="admin-product-row"
-                key={product.id}
-              >
-                <div>
-                  <strong>{product.name}</strong>
-                  <p>
-                    {product.category} · ₹{product.price}
-                  </p>
-                </div>
-
-                <div className="admin-product-actions">
-                  <button onClick={() => handleEdit(product)}>
-                    Edit
-                  </button>
-
-                  <button
-                    onClick={() => handleDelete(product.id)}
-                  >
-                    Delete
-                  </button>
-                </div>
+            <div className="admin-table-controls">
+              <div>
+                <label htmlFor="admin-category-filter">Category:</label>
+                <select
+                  id="admin-category-filter"
+                  value={adminCategory}
+                  onChange={(event) => {
+                    setAdminCategory(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                >
+                  {adminCategories.map((item) => (
+                    <option key={item} value={item}>
+                      {item === "All" ? "All Categories" : item}
+                    </option>
+                  ))}
+                </select>
               </div>
-            ))}
+
+              <div>
+                <label htmlFor="rows-per-page">Rows per page:</label>
+                <select
+                  id="rows-per-page"
+                  value={rowsPerPage}
+                  onChange={(event) => {
+                    setRowsPerPage(Number(event.target.value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  {pageSizeOptions.map((size) => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {adminLoading && <p>Loading admin products...</p>}
+            {adminError && <p className="admin-error">{adminError}</p>}
+
+            {!adminLoading && !adminError && (
+              <>
+                <div className="admin-table-wrapper">
+                  <table className="admin-products-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Edit</th>
+                        <th>Delete</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedAdminProducts.length > 0 ? (
+                        paginatedAdminProducts.map((product) => (
+                          <tr key={product.id}>
+                            <td>{product.id}</td>
+                            <td>{product.name}</td>
+                            <td>{product.category}</td>
+                            <td>₹{product.price.toLocaleString("en-IN")}</td>
+                            <td>
+                              <button type="button" onClick={() => handleEdit(product)}>
+                                Edit
+                              </button>
+                            </td>
+                            <td>
+                              <button type="button" onClick={() => handleDelete(product.id)}>
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr><td colSpan={6}>No products found.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="admin-pagination">
+                  <p>
+                    Showing {filteredAdminProducts.length === 0 ? 0 : startIndex + 1}
+                    {" "}to {Math.min(startIndex + rowsPerPage, filteredAdminProducts.length)}
+                    {" "}of {filteredAdminProducts.length} products
+                  </p>
+                  <div className="pagination-buttons">
+                    <button
+                      type="button"
+                      disabled={safeCurrentPage === 1}
+                      onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                    >Previous</button>
+
+                    {paginationPages.map((page, index) =>
+                      page === "ellipsis" ? (
+                        <span className="pagination-ellipsis" key={`ellipsis-${index}`} aria-hidden="true">…</span>
+                      ) : (
+                        <button
+                          key={page}
+                          type="button"
+                          className={safeCurrentPage === page ? "active-page" : ""}
+                          aria-current={safeCurrentPage === page ? "page" : undefined}
+                          onClick={() => setCurrentPage(page)}
+                        >{page}</button>
+                      )
+                    )}
+
+                    <button
+                      type="button"
+                      disabled={safeCurrentPage === totalPages}
+                      onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                    >Next</button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </section>
       )}
