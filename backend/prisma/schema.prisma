@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model admins {
+  id            Int    @id @default(autoincrement())
+  username      String @unique(map: "username") @db.VarChar(100)
+  password_hash String @db.VarChar(255)
+}
+
+model products {
+  id          Int     @id @default(autoincrement())
+  name        String  @db.VarChar(100)
+  price       Decimal @db.Decimal(10, 2)
+  category    String  @db.VarChar(100)
+  image_url   String? @db.Text
+  description String? @db.Text
+
+  order_items order_items[]
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model products_backup {
+  id        Int     @default(0)
+  name      String  @db.VarChar(100)
+  price     Decimal @db.Decimal(10, 2)
+  category  String   @db.VarChar(100)
+  image_url String?  @db.VarChar(255)
+
+  @@ignore
+}
+
+
+model order_items {
+  id           Int      @id @default(autoincrement())
+  order_id     Int
+  product_id   Int?
+  product_name String   @db.VarChar(100)
+  price        Decimal  @db.Decimal(10, 2)
+  quantity     Int
+  subtotal     Decimal  @db.Decimal(10, 2)
+
+  order orders @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  product products? @relation(fields: [product_id], references: [id], onDelete: SetNull)
+}
+
+model orders {
+  id            Int      @id @default(autoincrement())
+  customer_name String   @db.VarChar(100)
+  email         String   @db.VarChar(150)
+  phone         String   @db.VarChar(20)
+  address       String   @db.Text
+  city          String   @db.VarChar(100)
+  pincode       String   @db.VarChar(10)
+  total_amount  Decimal  @db.Decimal(10, 2)
+  created_at    DateTime @default(now())
+  status        String   @default("Pending") @db.VarChar(20)
+
+  order_items order_items[]
+}

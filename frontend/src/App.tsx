@@ -1,21 +1,30 @@
-
 import "./App.css";
+
 import { useCallback, useEffect, useState } from "react";
+import { Link, Routes, Route } from "react-router-dom";
+
+import ProductDetails from "./ProductDetails";
+import Cart from "./Cart";
+import { useCart } from "./CartContext";
+import Orders from "./Orders";
+import Checkout from "./Checkout";
 import type { FormEvent } from "react";
 
 import heroImage from "./assets/hero.jpg";
-
 interface Product {
   id: number;
   name: string;
   price: number;
   category: string;
   image_url: string | null;
+  description: string | null;
 }
 
 const API_URL = "http://localhost:5000/api";
 
 function App() {
+
+  const { addToCart, cartCount } = useCart();
   // Products from MySQL
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +34,11 @@ function App() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sort, setSort] = useState("default");
+
+  // Public storefront pagination
+  const [currentProductPage, setCurrentProductPage] = useState(1);
+  const productsPerPage = 3;
+
 
   // Admin authentication
   const [token, setToken] = useState(
@@ -42,6 +56,7 @@ function App() {
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [description, setDescription] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formMessage, setFormMessage] = useState("");
   const [formError, setFormError] = useState("");
@@ -110,6 +125,7 @@ function App() {
   // Load products whenever search, category or sorting changes
   useEffect(() => {
     fetchProducts();
+    setCurrentProductPage(1);
   }, [fetchProducts]);
 
   // Fetch all products for the Admin Dashboard (independent of storefront filters)
@@ -185,6 +201,81 @@ function App() {
     paginationPages.push(1, "ellipsis", safeCurrentPage - 1, safeCurrentPage, safeCurrentPage + 1, "ellipsis", totalPages);
   }
 
+  // Public storefront: show only the first 100 products
+  const visibleProducts = products.slice(0, 100);
+
+  // Public storefront pagination
+  const totalProductPages = Math.max(
+    1,
+    Math.ceil(visibleProducts.length / productsPerPage)
+  );
+
+  const safeProductPage = Math.min(
+    currentProductPage,
+    totalProductPages
+  );
+
+  // Automatically move the public product pagination every 3 seconds.
+  // The timer resets whenever the page changes, including manual navigation.
+  useEffect(() => {
+    if (totalProductPages <= 1) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setCurrentProductPage((page) =>
+        page >= totalProductPages ? 1 : page + 1
+      );
+    }, 3000);
+
+    return () => window.clearInterval(timer);
+  }, [totalProductPages, safeProductPage]);
+
+  const productStartIndex =
+    (safeProductPage - 1) * productsPerPage;
+
+  const paginatedProducts = visibleProducts.slice(
+    productStartIndex,
+    productStartIndex + productsPerPage
+  );
+
+  // Show only nearby page numbers for public products.
+  const productPaginationPages: (number | "ellipsis")[] = [];
+
+  if (totalProductPages <= 5) {
+    for (let page = 1; page <= totalProductPages; page += 1) {
+      productPaginationPages.push(page);
+    }
+  } else if (safeProductPage <= 3) {
+    productPaginationPages.push(
+      1,
+      2,
+      3,
+      4,
+      "ellipsis",
+      totalProductPages
+    );
+  } else if (safeProductPage >= totalProductPages - 2) {
+    productPaginationPages.push(
+      1,
+      "ellipsis",
+      totalProductPages - 3,
+      totalProductPages - 2,
+      totalProductPages - 1,
+      totalProductPages
+    );
+  } else {
+    productPaginationPages.push(
+      1,
+      "ellipsis",
+      safeProductPage - 1,
+      safeProductPage,
+      safeProductPage + 1,
+      "ellipsis",
+      totalProductPages
+    );
+  }
+
   // Admin login
   const handleLogin = async (
     event: FormEvent<HTMLFormElement>
@@ -247,6 +338,7 @@ function App() {
     setPrice("");
     setCategory("");
     setImageUrl("");
+    setDescription("");
     setEditingId(null);
   };
 
@@ -278,6 +370,7 @@ function App() {
       price: numericPrice,
       category: category.trim(),
       image_url: imageUrl.trim() || null,
+      description: description.trim() || null,
     };
 
     const isEditing = editingId !== null;
@@ -335,6 +428,7 @@ function App() {
     setPrice(String(product.price));
     setCategory(product.category);
     setImageUrl(product.image_url || "");
+    setDescription(product.description || "");
     setFormMessage("");
     setFormError("");
 
@@ -389,7 +483,15 @@ function App() {
   };
 
   return (
-    <div>
+    <Routes>
+       <Route path="/cart" element={<Cart />} />
+       <Route path="/orders" element={<Orders />} />
+        <Route path="/checkout" element={<Checkout />} />
+      <Route path="/product/:id" element={<ProductDetails />} />
+      <Route
+        path="*"
+        element={
+          <div>
       {/* Navbar */}
       <nav className="navbar">
         <h2>ProductHub</h2>
@@ -402,6 +504,16 @@ function App() {
         </div>
 
         <div className="nav-actions">
+
+  <Link to="/cart" className="cart-nav-link">
+    🛒 Cart
+
+    {cartCount > 0 && (
+      <span className="cart-count-badge">
+        {cartCount}
+      </span>
+    )}
+  </Link>
           {token ? (
             <button onClick={handleLogout}>
               Admin Logout
@@ -490,6 +602,11 @@ function App() {
         >
           <h2>Admin Dashboard</h2>
           <p>Manage your ProductHub products here.</p>
+          <div className="admin-dashboard-links">
+  <Link to="/orders" className="admin-orders-link">
+    📦 Customer Orders
+  </Link>
+</div>
 
           <div className="admin-form-card">
             <h3>
@@ -538,6 +655,15 @@ function App() {
                 value={imageUrl}
                 onChange={(event) => setImageUrl(event.target.value)}
                 placeholder="Enter image URL or upload path"
+              />
+
+              <label htmlFor="product-description">Product Description</label>
+              <textarea
+                id="product-description"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Enter product description"
+                rows={5}
               />
 
               {imageUrl.trim() && (
@@ -770,34 +896,128 @@ function App() {
         )}
 
         {!loading && !error && products.length > 0 && (
-          <div className="products-grid">
-            {products.map((product) => (
-              <div className="product-card" key={product.id}>
-                {product.image_url && (
-                  <img
-                    src={
-                      product.image_url.startsWith("http")
-                        ? product.image_url
-                        : `http://localhost:5000${product.image_url.startsWith("/") ? "" : "/"}${product.image_url}`
-                    }
-                    alt={product.name}
-                    loading="lazy"
-                  />
+          <>
+            <div className="products-grid">
+              {paginatedProducts.map((product) => (
+                <div className="product-card" key={product.id}>
+                  {product.image_url && (
+                    <img
+                      src={
+                        product.image_url.startsWith("http")
+                          ? product.image_url
+                          : `http://localhost:5000${product.image_url.startsWith("/") ? "" : "/"}${product.image_url}`
+                      }
+                      alt={product.name}
+                      loading="lazy"
+                    />
+                  )}
+
+                  <div className="product-info">
+                    <p>{product.category}</p>
+                    <h3>{product.name}</h3>
+                    <h4>₹{product.price.toLocaleString("en-IN")}</h4>
+
+                    <div className="product-card-actions">
+                      <Link
+                        to={`/product/${product.id}`}
+                        className="view-details-button"
+                      >
+                        View Details
+                      </Link>
+                     <button
+  type="button"
+  onClick={() =>
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      category: product.category,
+      image_url: product.image_url,
+      quantity: 1,
+    })
+  }
+>
+  Add to Cart
+</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="admin-pagination public-pagination">
+              <p>
+                Showing {productStartIndex + 1} to{" "}
+                {Math.min(
+                  productStartIndex + productsPerPage,
+                  products.length
+                )}{" "}
+                of {products.length} products
+              </p>
+
+              <div className="pagination-buttons">
+                <button
+                  type="button"
+                  disabled={safeProductPage === 1}
+                  onClick={() =>
+                    setCurrentProductPage((page) =>
+                      Math.max(1, page - 1)
+                    )
+                  }
+                >
+                  Previous
+                </button>
+
+                {productPaginationPages.map((page, index) =>
+                  page === "ellipsis" ? (
+                    <span
+                      className="pagination-ellipsis"
+                      key={`product-ellipsis-${index}`}
+                      aria-hidden="true"
+                    >
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={page}
+                      type="button"
+                      className={
+                        safeProductPage === page
+                          ? "active-page"
+                          : ""
+                      }
+                      aria-current={
+                        safeProductPage === page
+                          ? "page"
+                          : undefined
+                      }
+                      onClick={() => setCurrentProductPage(page)}
+                    >
+                      {page}
+                    </button>
+                  )
                 )}
 
-                <div className="product-info">
-                  <p>{product.category}</p>
-                  <h3>{product.name}</h3>
-                  <h4>₹{product.price.toLocaleString("en-IN")}</h4>
-
-                  <button>Add to Cart</button>
-                </div>
+                <button
+                  type="button"
+                  disabled={safeProductPage === totalProductPages}
+                  onClick={() =>
+                    setCurrentProductPage((page) =>
+                      Math.min(totalProductPages, page + 1)
+                    )
+                  }
+                >
+                  Next
+                </button>
               </div>
-            ))}
-          </div>
+            </div>
+          </>
         )}
       </section>
-    </div>
+          </div>
+        }
+      />
+    </Routes>
   );
 }
 

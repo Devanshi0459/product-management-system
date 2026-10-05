@@ -1,31 +1,31 @@
-
 import "dotenv/config";
+
 import express from "express";
+
 import cors from "cors";
+
 import bcrypt from "bcryptjs";
+
 import * as jwt from "jsonwebtoken";
+
 import path from "path";
+
 import type { Request, Response, NextFunction } from "express";
-import pool from "./db";
+
+import prisma from "./lib/prisma";
 
 const app = express();
+
 const PORT = 5000;
 
-// Check required environment variables
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const JWT_SECRET = process.env.JWT_SECRET;
 
-if (!ADMIN_USERNAME || !ADMIN_PASSWORD || !JWT_SECRET) {
-  throw new Error(
-    "Missing ADMIN_USERNAME, ADMIN_PASSWORD, or JWT_SECRET in .env"
-  );
+if (!JWT_SECRET) {
+  throw new Error("Missing JWT_SECRET in .env");
 }
 
-// Hash admin password when server starts
-const adminPasswordHash = bcrypt.hashSync(ADMIN_PASSWORD, 10);
-
 app.use(cors());
+
 app.use(express.json());
 
 // =====================================
@@ -34,9 +34,7 @@ app.use(express.json());
 
 app.use(
   "/images",
-  express.static(
-    path.join(process.cwd(), "public", "images")
-  )
+  express.static(path.join(process.cwd(), "public", "images"))
 );
 
 // =====================================
@@ -48,7 +46,7 @@ app.get("/", (req, res) => {
 });
 
 // =====================================
-// ADMIN LOGIN API
+// ADMIN LOGIN API - PRISMA
 // =====================================
 
 app.post("/api/admin/login", async (req, res) => {
@@ -65,33 +63,47 @@ app.post("/api/admin/login", async (req, res) => {
     });
   }
 
-  if (username !== ADMIN_USERNAME) {
-    return res.status(401).json({
-      message: "Invalid username or password",
+  try {
+    const admin = await prisma.admins.findUnique({
+      where: {
+        username,
+      },
+    });
+
+    if (!admin) {
+      return res.status(401).json({
+        message: "Invalid username or password",
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      admin.password_hash
+    );
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        message: "Invalid username or password",
+      });
+    }
+
+    const token = jwt.sign(
+      { role: "admin" },
+      JWT_SECRET,
+      { expiresIn: "2h" }
+    );
+
+    return res.status(200).json({
+      message: "Admin login successful",
+      token,
+    });
+  } catch (error) {
+    console.error("Error during admin login:", error);
+
+    return res.status(500).json({
+      message: "Login failed",
     });
   }
-
-  const isPasswordValid = await bcrypt.compare(
-    password,
-    adminPasswordHash
-  );
-
-  if (!isPasswordValid) {
-    return res.status(401).json({
-      message: "Invalid username or password",
-    });
-  }
-
-  const token = jwt.sign(
-    { role: "admin" },
-    JWT_SECRET,
-    { expiresIn: "2h" }
-  );
-
-  return res.status(200).json({
-    message: "Admin login successful",
-    token,
-  });
 });
 
 // =====================================
@@ -116,7 +128,7 @@ function requireAdmin(
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET!);
 
     if (
       typeof decoded === "string" ||
@@ -137,7 +149,8 @@ function requireAdmin(
 
 // =====================================
 // GET API - PUBLIC
-// Fetch, Search, Filter, Sort and Images
+// Fetch, Search, Filter, Sort
+// Using Prisma findMany()
 // =====================================
 
 app.get("/api/products", async (req, res) => {
@@ -157,34 +170,48 @@ app.get("/api/products", async (req, res) => {
         ? req.query.sort
         : "default";
 
-    let sql = "SELECT * FROM products WHERE 1=1";
-
-    const params: string[] = [];
+    const where: any = {};
 
     // Search by product name
     if (search) {
-      sql += " AND name LIKE ?";
-      params.push(`%${search}%`);
+      where.name = {
+        contains: search,
+      };
     }
 
     // Filter by category
     if (category && category !== "All") {
-      sql += " AND category = ?";
-      params.push(category);
+      where.category = category;
     }
+
+    let orderBy: any = {
+      id: "asc",
+    };
 
     // Sort by price
     if (sort === "price_asc") {
-      sql += " ORDER BY price ASC, id ASC";
+      orderBy = [
+        { price: "asc" },
+        { id: "asc" },
+      ];
     } else if (sort === "price_desc") {
-      sql += " ORDER BY price DESC, id ASC";
-    } else {
-      sql += " ORDER BY id ASC";
+      orderBy = [
+        { price: "desc" },
+        { id: "asc" },
+      ];
     }
 
-    const [rows] = await pool.execute(sql, params);
+    const products = await prisma.products.findMany({
+      where,
+      orderBy,
+    });
 
-    return res.status(200).json(rows);
+    const formattedProducts = products.map((product) => ({
+      ...product,
+      price: Number(product.price),
+    }));
+
+    return res.status(200).json(formattedProducts);
   } catch (error) {
     console.error("Error fetching products:", error);
 
@@ -195,15 +222,61 @@ app.get("/api/products", async (req, res) => {
 });
 
 // =====================================
+// GET SINGLE PRODUCT API - PUBLIC
+// Fetch one product by ID
+// Using Prisma findUnique()
+// =====================================
+
+app.get("/api/products/:id", async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({
+      message: "Please provide a valid product ID",
+    });
+  }
+
+  try {
+    const product = await prisma.products.findUnique({
+      where: { id },
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found",
+      });
+    }
+
+    return res.status(200).json({
+      ...product,
+      price: Number(product.price),
+    });
+  } catch (error) {
+    console.error("Error fetching product:", error);
+
+    return res.status(500).json({
+      message: "Failed to fetch product",
+    });
+  }
+});
+
+// =====================================
 // POST API - ADMIN ONLY
-// Add a new product with image URL
+// Add a new product
+// Using Prisma create()
 // =====================================
 
 app.post(
   "/api/products",
   requireAdmin,
   async (req, res) => {
-    const { name, price, category, image_url } = req.body;
+    const {
+      name,
+      price,
+      category,
+      image_url,
+      description,
+    } = req.body;
 
     if (
       typeof name !== "string" ||
@@ -219,6 +292,7 @@ app.post(
       });
     }
 
+    // Validate image URL
     if (
       image_url !== undefined &&
       image_url !== null &&
@@ -229,34 +303,43 @@ app.post(
       });
     }
 
+    // Validate description
+    if (
+      description !== undefined &&
+      description !== null &&
+      typeof description !== "string"
+    ) {
+      return res.status(400).json({
+        message: "Description must be a string",
+      });
+    }
+
     const imageUrl =
       typeof image_url === "string" && image_url.trim()
         ? image_url.trim()
         : null;
 
+    const productDescription =
+      typeof description === "string" && description.trim()
+        ? description.trim()
+        : null;
+
     try {
-      const [result] = await pool.execute(
-        `INSERT INTO products
-         (name, price, category, image_url)
-         VALUES (?, ?, ?, ?)`,
-        [
-          name.trim(),
-          price,
-          category.trim(),
-          imageUrl,
-        ]
-      );
-
-      const insertId = (result as any).insertId;
-
-      return res.status(201).json({
-        message: "Product added successfully",
-        product: {
-          id: insertId,
+      const product = await prisma.products.create({
+        data: {
           name: name.trim(),
           price,
           category: category.trim(),
           image_url: imageUrl,
+          description: productDescription,
+        },
+      });
+
+      return res.status(201).json({
+        message: "Product added successfully",
+        product: {
+          ...product,
+          price: Number(product.price),
         },
       });
     } catch (error) {
@@ -272,6 +355,7 @@ app.post(
 // =====================================
 // PUT API - ADMIN ONLY
 // Update an existing product
+// Using Prisma update()
 // =====================================
 
 app.put(
@@ -280,7 +364,13 @@ app.put(
   async (req, res) => {
     const id = Number(req.params.id);
 
-    const { name, price, category, image_url } = req.body;
+    const {
+      name,
+      price,
+      category,
+      image_url,
+      description,
+    } = req.body;
 
     if (!Number.isInteger(id) || id <= 0) {
       return res.status(400).json({
@@ -302,6 +392,7 @@ app.put(
       });
     }
 
+    // Validate image URL
     if (
       image_url !== undefined &&
       image_url !== null &&
@@ -312,51 +403,64 @@ app.put(
       });
     }
 
-    const imageUrl =
-      typeof image_url === "string" && image_url.trim()
-        ? image_url.trim()
-        : null;
+    // Validate description
+    if (
+      description !== undefined &&
+      description !== null &&
+      typeof description !== "string"
+    ) {
+      return res.status(400).json({
+        message: "Description must be a string",
+      });
+    }
 
     try {
-      const [result] = await pool.execute(
-        `UPDATE products
-         SET name = ?,
-             price = ?,
-             category = ?,
-             image_url = COALESCE(?, image_url)
-         WHERE id = ?`,
-        [
-          name.trim(),
-          price,
-          category.trim(),
-          imageUrl,
-          id,
-        ]
-      );
+      const existingProduct = await prisma.products.findUnique({
+        where: { id },
+      });
 
-      const affectedRows = (result as any).affectedRows;
-
-      if (affectedRows === 0) {
-        const [existingRows] = await pool.execute(
-          "SELECT id FROM products WHERE id = ?",
-          [id]
-        );
-
-        if ((existingRows as any[]).length === 0) {
-          return res.status(404).json({
-            message: "Product not found",
-          });
-        }
+      if (!existingProduct) {
+        return res.status(404).json({
+          message: "Product not found",
+        });
       }
 
-      const [updatedRows] = await pool.execute(
-        "SELECT * FROM products WHERE id = ?",
-        [id]
-      );
+      const data: {
+        name: string;
+        price: number;
+        category: string;
+        image_url?: string;
+        description?: string | null;
+      } = {
+        name: name.trim(),
+        price,
+        category: category.trim(),
+      };
+
+      // Preserve existing image
+      // when image_url is not provided/null
+      if (typeof image_url === "string" && image_url.trim()) {
+        data.image_url = image_url.trim();
+      }
+
+      // Update description when provided
+      if (typeof description === "string") {
+        data.description = description.trim()
+          ? description.trim()
+          : null;
+      }
+
+      const updatedProduct = await prisma.products.update({
+        where: { id },
+        data,
+      });
 
       return res.status(200).json({
         message: "Product updated successfully",
-        product: (updatedRows as any[])[0],
+        product: {
+          ...updatedProduct,
+          price: Number(updatedProduct.price),
+        },
       });
     } catch (error) {
       console.error("Error updating product:", error);
@@ -371,6 +475,7 @@ app.put(
 // =====================================
 // DELETE API - ADMIN ONLY
 // Delete a product
+// Using Prisma delete()
 // =====================================
 
 app.delete(
@@ -386,35 +491,263 @@ app.delete(
     }
 
     try {
-      const [rows] = await pool.execute(
-        "SELECT * FROM products WHERE id = ?",
-        [id]
-      );
+      const product = await prisma.products.findUnique({
+        where: { id },
+      });
 
-      const products = rows as any[];
-
-      if (products.length === 0) {
+      if (!product) {
         return res.status(404).json({
           message: "Product not found",
         });
       }
 
-      const deletedProduct = products[0];
-
-      await pool.execute(
-        "DELETE FROM products WHERE id = ?",
-        [id]
-      );
+      const deletedProduct = await prisma.products.delete({
+        where: { id },
+      });
 
       return res.status(200).json({
         message: "Product deleted successfully",
-        product: deletedProduct,
+        product: {
+          ...deletedProduct,
+          price: Number(deletedProduct.price),
+        },
       });
     } catch (error) {
       console.error("Error deleting product:", error);
 
       return res.status(500).json({
         message: "Failed to delete product",
+      });
+    }
+  }
+);
+
+// =====================================
+// POST API - PUBLIC
+// Create a new customer order
+// =====================================
+
+app.post("/api/orders", async (req, res) => {
+  const {
+    customer_name,
+    email,
+    phone,
+    address,
+    city,
+    pincode,
+    items,
+  } = req.body;
+
+  // Validate customer details
+  if (
+    typeof customer_name !== "string" ||
+    !customer_name.trim() ||
+    typeof email !== "string" ||
+    !email.trim() ||
+    typeof phone !== "string" ||
+    !phone.trim() ||
+    typeof address !== "string" ||
+    !address.trim() ||
+    typeof city !== "string" ||
+    !city.trim() ||
+    typeof pincode !== "string" ||
+    !pincode.trim()
+  ) {
+    return res.status(400).json({
+      message: "Please provide all customer details",
+    });
+  }
+
+  // Validate cart items
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({
+      message: "Order must contain at least one product",
+    });
+  }
+
+  try {
+    // Calculate total on backend
+    let totalAmount = 0;
+
+    const orderItemsData = items.map((item: any) => {
+      const price = Number(item.price);
+      const quantity = Number(item.quantity);
+
+      if (
+        !Number.isFinite(price) ||
+        price < 0 ||
+        !Number.isInteger(quantity) ||
+        quantity < 1
+      ) {
+        throw new Error("Invalid product price or quantity");
+      }
+
+      const subtotal = price * quantity;
+
+      totalAmount += subtotal;
+
+      return {
+        product_id:
+          Number.isInteger(Number(item.id))
+            ? Number(item.id)
+            : null,
+        product_name: String(item.name),
+        price,
+        quantity,
+        subtotal,
+      };
+    });
+
+    // Create order and order items together
+    const order = await prisma.orders.create({
+      data: {
+        customer_name: customer_name.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+        city: city.trim(),
+        pincode: pincode.trim(),
+        total_amount: totalAmount,
+
+        order_items: {
+          create: orderItemsData,
+        },
+      },
+
+      include: {
+        order_items: true,
+      },
+    });
+
+    return res.status(201).json({
+      message: "Order placed successfully",
+      order: {
+        ...order,
+        total_amount: Number(order.total_amount),
+        order_items: order.order_items.map((item) => ({
+          ...item,
+          price: Number(item.price),
+          subtotal: Number(item.subtotal),
+        })),
+      },
+    });
+  } catch (error) {
+    console.error("Error creating order:", error);
+
+    return res.status(500).json({
+      message: "Failed to place order",
+    });
+  }
+});
+// =====================================
+// GET API - ADMIN ONLY
+// Fetch all customer orders
+// =====================================
+
+app.get(
+  "/api/orders",
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const orders = await prisma.orders.findMany({
+        orderBy: {
+          created_at: "desc",
+        },
+
+        include: {
+          order_items: true,
+        },
+      });
+
+      const formattedOrders = orders.map((order) => ({
+        ...order,
+
+        total_amount: Number(order.total_amount),
+
+        order_items: order.order_items.map((item) => ({
+          ...item,
+          price: Number(item.price),
+          subtotal: Number(item.subtotal),
+        })),
+      }));
+
+      return res.status(200).json(formattedOrders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+
+      return res.status(500).json({
+        message: "Failed to fetch orders",
+      });
+    }
+  }
+);
+
+
+app.put(
+  "/api/orders/:id/status",
+  requireAdmin,
+  async (req, res) => {
+    const orderId = Number(req.params.id);
+    const { status } = req.body;
+
+    const allowedStatuses = [
+      "Pending",
+      "Shipped",
+      "Delivered",
+    ];
+
+    if (!Number.isInteger(orderId)) {
+      return res.status(400).json({
+        message: "Invalid order ID",
+      });
+    }
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        message:
+          "Invalid status. Use Pending, Shipped, or Delivered.",
+      });
+    }
+
+    try {
+      const existingOrder = await prisma.orders.findUnique({
+        where: {
+          id: orderId,
+        },
+      });
+
+      if (!existingOrder) {
+        return res.status(404).json({
+          message: "Order not found",
+        });
+      }
+
+      const updatedOrder = await prisma.orders.update({
+        where: {
+          id: orderId,
+        },
+        data: {
+          status,
+        },
+      });
+
+      return res.status(200).json({
+        message: "Order status updated successfully",
+        order: {
+          ...updatedOrder,
+          total_amount: Number(
+            updatedOrder.total_amount
+          ),
+        },
+      });
+    } catch (error) {
+      console.error(
+        "Error updating order status:",
+        error
+      );
+
+      return res.status(500).json({
+        message: "Failed to update order status",
       });
     }
   }

@@ -586,8 +586,11 @@ a {
 .product-card img {
   width: 100%;
   height: 220px;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
   background: #f2eff8;
+  padding: 10px;
+  display: block;
 }
 
 .product-info {
@@ -1031,4 +1034,126 @@ a {
   .pagination-buttons button {
     flex: 1;
   }
+}
+
+/* =========================================
+   Product Card Actions
+========================================= */
+
+.product-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+/* =========================================
+   View Details Button
+========================================= */
+
+.view-details-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 110px;
+  height: 44px;
+
+  padding: 0 18px;
+
+  border: 2px solid #5b3cc4;
+  border-radius: 8px;
+
+  background: #ffffff;
+  color: #5b3cc4;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  text-decoration: none;
+  box-sizing: border-box;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-details-button:hover {
+  background: #f0edff;
+  color: #4930a8;
+  border-color: #4930a8;
+}
+
+/* =========================================
+   Product Card Add to Cart
+========================================= */
+
+.product-card-actions button {
+  min-width: 130px;
+  height: 44px;
+
+  padding: 0 18px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #6938e5;
+  color: #ffffff;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.product-card-actions button:hover {
+  background: #5428c7;
+}
+.cart-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: #1f2937;
+  font-size: 15px;
+  font-weight: 500;
+  position: relative;
+}
+
+.cart-nav-link:hover {
+  color: #6d3df5;
+}
+
+.cart-count-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #6d3df5;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-dashboard-links {
+  margin: 20px 0;
+}
+
+.admin-orders-link {
+  display: inline-block;
+  padding: 12px 20px;
+  background: #111827;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.admin-orders-link:hover {
+  background: #374151;
+  transform: translateY(-1px);
 }
