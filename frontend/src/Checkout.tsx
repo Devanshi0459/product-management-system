@@ -42,9 +42,16 @@ function Checkout() {
         {
           method: "POST",
 
-          headers: {
-            "Content-Type": "application/json",
-          },
+          
+headers: {
+  "Content-Type": "application/json",
+  ...(localStorage.getItem("customerToken")
+    ? {
+        Authorization: `Bearer ${localStorage.getItem("customerToken")}`,
+      }
+    : {}),
+},
+
 
           body: JSON.stringify({
             customer_name: customerName,

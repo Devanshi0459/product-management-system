@@ -464,3 +464,371 @@
     font-size: 22px;
   }
 }
+
+/* =========================================
+   CART PAGE - PREMIUM THEME
+========================================= */
+
+.cart-page {
+  min-height: 100vh;
+  padding: 45px 6%;
+
+  background: #f7f1e7;
+  color: #292722;
+}
+
+.cart-page h1,
+.cart-page h2 {
+  color: #25231f;
+}
+
+.cart-item {
+  background: #fffdf9;
+
+  border: 1px solid #eadcc9;
+  border-radius: 18px;
+
+  padding: 20px;
+
+  box-shadow: 0 8px 22px rgba(55, 40, 25, 0.06);
+}
+
+.cart-item:hover {
+  border-color: #d8bd96;
+}
+
+.cart-item img {
+  border-radius: 12px;
+  background: #f5ecdf;
+}
+
+.cart-price {
+  color: #a8793d;
+  font-weight: 700;
+}
+
+/* Quantity buttons */
+.cart-quantity button {
+  width: 34px;
+  height: 34px;
+
+  border: 1px solid #ddcbb2;
+  border-radius: 8px;
+
+  background: #fffdf9;
+  color: #332d25;
+
+  cursor: pointer;
+}
+
+.cart-quantity button:hover {
+  background: #c89b5b;
+  color: white;
+}
+
+/* Order summary */
+.order-summary {
+  background: #fffdf9;
+
+  border: 1px solid #eadcc9;
+  border-radius: 20px;
+
+  padding: 25px;
+
+  box-shadow: 0 10px 28px rgba(55, 40, 25, 0.07);
+}
+
+.order-summary h2 {
+  color: #25231f;
+}
+
+.order-summary .total {
+  color: #a8793d;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+/* Checkout button */
+.checkout-button {
+  width: 100%;
+  min-height: 48px;
+
+  border: none;
+  border-radius: 25px;
+
+  background: #292824;
+  color: white;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.checkout-button:hover {
+  background: #b4874c;
+  transform: translateY(-2px);
+
+  box-shadow: 0 8px 18px rgba(120, 80, 30, 0.18);
+}
+/* =========================================
+   REMOVE PURPLE - PREMIUM GOLD THEME
+========================================= */
+
+/* Product count badge */
+.cart-page .cart-count,
+.cart-page .item-count,
+.cart-page .product-count {
+  background: #f3e8d7 !important;
+  color: #9a6b32 !important;
+}
+
+/* Category */
+.cart-page .category,
+.cart-page .product-category {
+  color: #a8793d !important;
+}
+
+/* Product price */
+.cart-page .price,
+.cart-page .product-price {
+  color: #a8793d !important;
+}
+
+/* Subtotal */
+.cart-page .subtotal,
+.cart-page .item-subtotal {
+  color: #292722 !important;
+  font-weight: 700;
+}
+
+/* Grand total */
+.cart-page .grand-total,
+.cart-page .total,
+.cart-page .cart-total {
+  color: #a8793d !important;
+}
+
+/* Quantity */
+.cart-page .quantity button {
+  color: #292722 !important;
+  background: #fffdf9 !important;
+  border-color: #dcc9ad !important;
+}
+
+.cart-page .quantity button:hover {
+  background: #c89b5b !important;
+  color: #ffffff !important;
+}
+
+/* Checkout button */
+.cart-page .checkout,
+.cart-page .checkout-button {
+  background: #292824 !important;
+  color: #ffffff !important;
+}
+
+.cart-page .checkout:hover,
+.cart-page .checkout-button:hover {
+  background: #b4874c !important;
+}
+
+/* Remove button */
+.cart-page .remove {
+  color: #a64b3c !important;
+}
+
+/* Clear cart */
+.cart-page .clear-cart {
+  color: #a64b3c !important;
+  border-color: #c98b7d !important;
+}
+/* =========================================
+   PRODUCTHUB CART - PREMIUM LUXURY THEME
+========================================= */
+
+/* Main page */
+.cart-page {
+  min-height: 100vh;
+  background: #f7f1e7;
+  color: #292722;
+}
+
+/* Main cart container */
+.cart-container {
+  background: #fffdf9;
+  border-color: #eadcc9;
+}
+
+/* Header */
+.cart-header h1 {
+  color: #25231f;
+}
+
+/* Product count - PURPLE REMOVED */
+.cart-item-count {
+  background: #f3e8d7 !important;
+  color: #9a6b32 !important;
+  border: 1px solid #ead4b5;
+}
+
+/* Product card */
+.cart-product {
+  background: #fffdf9;
+  border-color: #e4d8c8;
+  transition: all 0.25s ease;
+}
+
+.cart-product:hover {
+  border-color: #d2b58b;
+  box-shadow: 0 8px 22px rgba(70, 50, 30, 0.07);
+}
+
+/* Product image area */
+.cart-product-image {
+  background: #f7f0e5;
+  border-color: #eee1cf;
+}
+
+/* Category - GOLD */
+.cart-product-category {
+  color: #a8793d !important;
+  font-weight: 700;
+}
+
+/* Product name */
+.cart-product-info h2 {
+  color: #292722;
+}
+
+/* Product price - GOLD */
+.cart-product-price {
+  color: #a8793d !important;
+  font-weight: 700;
+}
+
+/* Quantity label */
+.cart-quantity-section > span {
+  color: #756b5f;
+}
+
+/* Quantity box */
+.cart-quantity-controls {
+  border-color: #dcc9ad !important;
+  background: #fffdf9;
+}
+
+/* Quantity buttons */
+.cart-quantity-controls button {
+  background: #fffdf9 !important;
+  color: #403a32 !important;
+  border-color: #dcc9ad !important;
+  transition: all 0.2s ease;
+}
+
+.cart-quantity-controls button:hover:not(:disabled) {
+  background: #c89b5b !important;
+  color: #ffffff !important;
+  border-color: #c89b5b !important;
+}
+
+/* Disabled minus button */
+.cart-quantity-controls button:disabled {
+  color: #bdb4a8 !important;
+  background: #f7f2ea !important;
+}
+
+/* Quantity number */
+.cart-quantity-controls span {
+  color: #292722 !important;
+  font-weight: 700;
+}
+
+/* Subtotal label */
+.cart-product-total > span {
+  color: #756b5f;
+}
+
+/* Subtotal amount - GOLD */
+.cart-product-total strong {
+  color: #a8793d !important;
+}
+
+/* Remove */
+.remove-cart-button {
+  color: #a64b3c !important;
+  background: transparent !important;
+}
+
+.remove-cart-button:hover {
+  color: #8f3528 !important;
+}
+
+/* Summary */
+.cart-summary {
+  border-top-color: #e6daca;
+}
+
+/* Grand Total label */
+.cart-total-row span {
+  color: #403a32;
+}
+
+/* Grand Total amount - GOLD */
+.cart-total-row strong {
+  color: #a8793d !important;
+}
+
+/* Clear Cart */
+.clear-cart-button {
+  background: transparent !important;
+  color: #a64b3c !important;
+  border: 1px solid #c98b7d !important;
+  transition: all 0.25s ease;
+}
+
+.clear-cart-button:hover {
+  background: #a64b3c !important;
+  color: #ffffff !important;
+  border-color: #a64b3c !important;
+}
+
+/* Checkout */
+.checkout-button {
+  background: #292824 !important;
+  color: #ffffff !important;
+  border: none !important;
+  transition: all 0.25s ease;
+}
+
+.checkout-button:hover {
+  background: #b4874c !important;
+  color: #ffffff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(120, 80, 30, 0.18);
+}
+
+/* Empty cart */
+.empty-cart {
+  color: #292722;
+}
+
+.empty-cart h1 {
+  color: #25231f;
+}
+
+.empty-cart p {
+  color: #756b5f;
+}
+
+/* Continue shopping */
+.continue-shopping-button {
+  background: #292824 !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.continue-shopping-button:hover {
+  background: #b4874c !important;
+}

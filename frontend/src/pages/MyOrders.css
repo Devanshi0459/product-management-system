@@ -1,0 +1,126 @@
+/* =========================================
+   PRODUCTHUB - MY ORDERS
+   PREMIUM LUXURY THEME
+========================================= */
+
+.my-orders-page {
+  min-height: 100vh;
+  padding: 45px 6%;
+  background: #f7f1e7;
+  color: #292722;
+}
+
+/* Page Heading */
+.my-orders-page > h1 {
+  max-width: 1100px;
+  margin: 0 auto 30px;
+
+  color: #25231f;
+  font-size: 34px;
+  font-weight: 800;
+}
+
+/* Order Card */
+.order-card {
+  max-width: 1100px;
+  margin: 0 auto 22px;
+  padding: 26px;
+
+  background: #fffdf9;
+  border: 1px solid #eadcc9;
+  border-radius: 20px;
+
+  box-shadow: 0 8px 25px rgba(55, 40, 25, 0.06);
+
+  transition: all 0.25s ease;
+}
+
+.order-card:hover {
+  border-color: #d5b98e;
+  box-shadow: 0 12px 30px rgba(55, 40, 25, 0.09);
+  transform: translateY(-2px);
+}
+
+/* Order Number */
+.order-card h3:first-child {
+  margin-top: 0;
+  color: #292722;
+  font-size: 21px;
+}
+
+/* Date & Status */
+.order-card p {
+  color: #62594e;
+  line-height: 1.6;
+}
+
+.order-card p strong {
+  color: #403a32;
+}
+
+/* Status */
+.order-card p:nth-of-type(2) strong {
+  color: #a8793d;
+}
+
+/* Products Heading */
+.order-card h4 {
+  margin-top: 24px;
+  margin-bottom: 12px;
+
+  color: #403a32;
+  font-size: 16px;
+}
+
+/* Product Rows */
+.order-card h4 + div p {
+  margin: 8px 0;
+  padding: 10px 14px;
+
+  background: #faf3e8;
+  border: 1px solid #eee0cc;
+  border-radius: 10px;
+
+  color: #51483d;
+}
+
+/* Total */
+.order-card h3:last-child {
+  margin-top: 22px;
+  padding-top: 18px;
+
+  border-top: 1px solid #eadcc9;
+
+  color: #a8793d;
+  font-size: 21px;
+}
+
+/* Empty Orders */
+.my-orders-page > p {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 30px;
+
+  text-align: center;
+
+  background: #fffdf9;
+  border: 1px solid #eadcc9;
+  border-radius: 18px;
+
+  color: #62594e;
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+  .my-orders-page {
+    padding: 30px 15px;
+  }
+
+  .my-orders-page > h1 {
+    font-size: 28px;
+  }
+
+  .order-card {
+    padding: 20px;
+  }
+}

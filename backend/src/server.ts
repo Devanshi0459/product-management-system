@@ -106,6 +106,146 @@ app.post("/api/admin/login", async (req, res) => {
   }
 });
 
+
+ // =====================================
+ // CUSTOMER REGISTRATION API
+ // =====================================
+
+app.post("/api/customers/register", async (req, res) => {
+  const { name, email, password } = req.body;
+
+  if (
+    typeof name !== "string" ||
+    !name.trim() ||
+    typeof email !== "string" ||
+    !email.trim() ||
+    typeof password !== "string" ||
+    password.length < 8
+  ) {
+    return res.status(400).json({
+      message:
+        "Please provide name, email, and a password of at least 8 characters",
+    });
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    return res.status(400).json({
+      message: "Please provide a valid email address",
+    });
+  }
+
+  try {
+    const existingCustomer = await prisma.customers.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (existingCustomer) {
+      return res.status(409).json({
+        message: "An account with this email already exists",
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const customer = await prisma.customers.create({
+      data: {
+        name: name.trim(),
+        email: normalizedEmail,
+        password_hash: passwordHash,
+      },
+    });
+
+    return res.status(201).json({
+      message: "Customer registered successfully",
+      customer: {
+        id: customer.id,
+        name: customer.name,
+        email: customer.email,
+        created_at: customer.created_at,
+      },
+    });
+  } catch (error) {
+    console.error("Customer registration error:", error);
+
+    return res.status(500).json({
+      message: "Customer registration failed",
+    });
+  }
+});
+
+
+// =====================================
+// CUSTOMER LOGIN API
+// =====================================
+
+app.post("/api/customers/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  if (
+    typeof email !== "string" ||
+    !email.trim() ||
+    typeof password !== "string" ||
+    !password
+  ) {
+    return res.status(400).json({
+      message: "Please provide email and password",
+    });
+  }
+
+  try {
+    const customer = await prisma.customers.findUnique({
+      where: {
+        email: email.trim().toLowerCase(),
+      },
+    });
+
+    if (!customer) {
+      return res.status(401).json({
+        message: "Invalid email or password",
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      customer.password_hash
+    );
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        message: "Invalid email or password",
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        customerId: customer.id,
+        role: "customer",
+      },
+      JWT_SECRET!,
+      { expiresIn: "2h" }
+    );
+
+    return res.status(200).json({
+      message: "Customer login successful",
+      token,
+      customer: {
+        id: customer.id,
+        name: customer.name,
+        email: customer.email,
+      },
+    });
+  } catch (error) {
+    console.error("Customer login error:", error);
+
+    return res.status(500).json({
+      message: "Customer login failed",
+    });
+  }
+});
+
+
 // =====================================
 // ADMIN AUTHENTICATION MIDDLEWARE
 // =====================================
@@ -146,6 +286,101 @@ function requireAdmin(
     });
   }
 }
+
+
+type CustomerRequest = Request & {
+  customerId?: number;
+};
+
+function requireCustomer(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const authHeader = req.headers.authorization;
+
+  const token = authHeader?.startsWith("Bearer ")
+    ? authHeader.slice(7)
+    : "";
+
+  if (!token) {
+    return res.status(401).json({
+      message: "Customer login required",
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET!);
+
+    if (
+      typeof decoded === "string" ||
+      decoded.role !== "customer" ||
+      typeof decoded.customerId !== "number"
+    ) {
+      return res.status(403).json({
+        message: "Customer access only",
+      });
+    }
+
+    (req as CustomerRequest).customerId =
+      decoded.customerId;
+
+    next();
+  } catch {
+    return res.status(401).json({
+      message: "Invalid or expired customer token",
+    });
+  }
+}
+
+
+ // =====================================
+// CUSTOMER MY ORDERS API
+// =====================================
+
+app.get(
+  "/api/customers/my-orders",
+  requireCustomer,
+  async (req, res) => {
+    const customerId =
+      (req as CustomerRequest).customerId;
+
+    try {
+      const orders = await prisma.orders.findMany({
+        where: {
+          customer_id: customerId,
+        },
+        orderBy: {
+          created_at: "desc",
+        },
+        include: {
+          order_items: true,
+        },
+      });
+
+      const formattedOrders = orders.map((order) => ({
+        ...order,
+        total_amount: Number(order.total_amount),
+        order_items: order.order_items.map((item) => ({
+          ...item,
+          price: Number(item.price),
+          subtotal: Number(item.subtotal),
+        })),
+      }));
+
+      return res.status(200).json(formattedOrders);
+    } catch (error) {
+      console.error(
+        "Error fetching customer orders:",
+        error
+      );
+
+      return res.status(500).json({
+        message: "Failed to fetch your orders",
+      });
+    }
+  }
+);
 
 // =====================================
 // GET API - PUBLIC
@@ -564,8 +799,39 @@ app.post("/api/orders", async (req, res) => {
       message: "Order must contain at least one product",
     });
   }
-
+  
   try {
+    
+    // Identify the logged-in customer
+    let customerId: number | null = null;
+
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : "";
+
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET!);
+
+        if (
+          typeof decoded === "string" ||
+          decoded.role !== "customer" ||
+          typeof decoded.customerId !== "number"
+        ) {
+          return res.status(403).json({
+            message: "Customer access only",
+          });
+        }
+
+        customerId = decoded.customerId;
+      } catch {
+        return res.status(401).json({
+          message: "Invalid or expired customer token",
+        });
+      }
+    }
+
     // Calculate total on backend
     let totalAmount = 0;
 
@@ -601,6 +867,7 @@ app.post("/api/orders", async (req, res) => {
     // Create order and order items together
     const order = await prisma.orders.create({
       data: {
+        customer_id: customerId,
         customer_name: customer_name.trim(),
         email: email.trim(),
         phone: phone.trim(),

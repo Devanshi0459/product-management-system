@@ -310,3 +310,362 @@
     gap: 12px;
   }
 }
+
+/* =========================================
+   PRODUCT DETAILS - PREMIUM THEME
+========================================= */
+
+.product-details-page {
+  background: #f7f1e7;
+  color: #292722;
+  min-height: 100vh;
+  padding: 45px 6%;
+}
+
+.product-details-container {
+  max-width: 1200px;
+  margin: 0 auto;
+
+  background: #fffdf9;
+  border: 1px solid #eadcc9;
+  border-radius: 22px;
+
+  padding: 40px;
+
+  box-shadow: 0 12px 35px rgba(55, 40, 25, 0.08);
+}
+
+/* Product image */
+.product-details-image {
+  background: #f6eee2;
+  border-radius: 18px;
+}
+
+/* Product information */
+.product-details-info h1 {
+  color: #25231f;
+}
+
+.product-details-info .price {
+  color: #a8793d;
+  font-weight: 700;
+}
+
+/* Quantity */
+.quantity-control {
+  display: inline-flex;
+  align-items: center;
+
+  border: 1px solid #dcc9ad;
+  border-radius: 12px;
+  overflow: hidden;
+
+  background: #fffdf9;
+}
+
+.quantity-control button {
+  width: 42px;
+  height: 42px;
+
+  border: none;
+  background: #f5ecdf;
+  color: #332d25;
+
+  font-size: 18px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.quantity-control button:hover {
+  background: #c89b5b;
+  color: white;
+}
+
+.quantity-control span {
+  min-width: 45px;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Add to Cart */
+.add-to-cart-button {
+  min-height: 46px;
+  padding: 0 25px;
+
+  border: none;
+  border-radius: 24px;
+
+  background: #292824;
+  color: #fff;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.add-to-cart-button:hover {
+  background: #b4874c;
+  transform: translateY(-2px);
+
+  box-shadow: 0 8px 18px rgba(120, 80, 30, 0.18);
+}
+
+/* Buy Now */
+.buy-now-button {
+  min-height: 46px;
+  padding: 0 25px;
+
+  border: 1px solid #c89b5b;
+  border-radius: 24px;
+
+  background: #fffdf9;
+  color: #9a6b32;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.buy-now-button:hover {
+  background: #c89b5b;
+  color: white;
+}
+
+/* Description */
+.product-description {
+  color: #62594e;
+  line-height: 1.7;
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+  .product-details-page {
+    padding: 25px 15px;
+  }
+
+  .product-details-container {
+    padding: 22px;
+  }
+}
+
+/* =========================================
+   PRODUCT DETAILS - PREMIUM THEME
+========================================= */
+
+/* Main page */
+.product-details-page {
+  background: #f7f1e7 !important;
+  color: #292722;
+}
+
+/* Product card/container */
+.product-details-container {
+  background: #fffdf9 !important;
+  border-color: #eadcc9 !important;
+  box-shadow: 0 12px 35px rgba(55, 40, 25, 0.08);
+}
+
+/* Product image area */
+.product-details-image {
+  background: #f6eee2 !important;
+  border-color: #eadcc9 !important;
+}
+
+/* Product title */
+.product-details-info h1 {
+  color: #25231f !important;
+}
+
+/* Category */
+.product-details-info .category,
+.product-category {
+  color: #a8793d !important;
+}
+
+/* Price */
+.product-details-info .price,
+.product-price {
+  color: #a8793d !important;
+  font-weight: 700;
+}
+
+/* Description */
+.product-description {
+  color: #62594e !important;
+}
+
+/* Quantity area */
+.quantity-control {
+  background: #fffdf9 !important;
+  border-color: #dcc9ad !important;
+}
+
+.quantity-control button {
+  background: #f5ecdf !important;
+  color: #332d25 !important;
+  border-color: #dcc9ad !important;
+}
+
+.quantity-control button:hover {
+  background: #c89b5b !important;
+  color: #ffffff !important;
+}
+
+.quantity-control span {
+  color: #292722 !important;
+}
+
+/* Add to Cart */
+.add-to-cart-button {
+  background: #292824 !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.add-to-cart-button:hover {
+  background: #b4874c !important;
+  color: #ffffff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(120, 80, 30, 0.18);
+}
+
+/* Buy Now */
+.buy-now-button {
+  background: #fffdf9 !important;
+  color: #9a6b32 !important;
+  border: 1px solid #c89b5b !important;
+}
+
+.buy-now-button:hover {
+  background: #c89b5b !important;
+  color: #ffffff !important;
+}
+
+/* Back / links */
+.product-details-page a {
+  color: #a8793d !important;
+}
+
+.product-details-page a:hover {
+  color: #8f632e !important;
+}
+
+/* Remove purple from common text */
+.product-details-page strong {
+  color: #a8793d;
+}
+
+/* =========================================
+   PRODUCT DETAILS - FINAL PURPLE REMOVAL
+========================================= */
+
+/* Page background */
+.product-details-page {
+  background: #f7f1e7 !important;
+}
+
+/* Main card */
+.product-details-container {
+  background: #fffdf9 !important;
+  border: 1px solid #eadcc9 !important;
+}
+
+/* Back to Products */
+.product-details-page a {
+  color: #a8793d !important;
+}
+
+.product-details-page a:hover {
+  color: #8f632e !important;
+}
+
+/* CATEGORY - ELECTRONICS */
+.product-details-container p:first-child {
+  color: #a8793d !important;
+  font-weight: 700;
+}
+
+/* PRODUCT PRICE */
+.product-details-container h2 {
+  color: #a8793d !important;
+}
+
+/* Description heading */
+.product-description h3 {
+  color: #292722 !important;
+}
+
+/* Description text */
+.product-description p {
+  color: #62594e !important;
+}
+
+/* Product ID */
+.product-details-container p {
+  color: #62594e;
+}
+
+/* Total */
+.product-total-price {
+  color: #a8793d !important;
+  font-weight: 700;
+}
+
+/* Quantity buttons */
+.product-details-container button {
+  transition: all 0.25s ease;
+}
+
+.product-details-container button:hover {
+  border-color: #c89b5b !important;
+}
+
+/* Add to Cart */
+.add-to-cart-button {
+  background: #292824 !important;
+  color: #ffffff !important;
+  border-color: #292824 !important;
+}
+
+.add-to-cart-button:hover {
+  background: #b4874c !important;
+  color: #ffffff !important;
+}
+
+/* Buy Now */
+.buy-now-button {
+  background: #fffdf9 !important;
+  color: #9a6b32 !important;
+  border: 1px solid #c89b5b !important;
+}
+
+.buy-now-button:hover {
+  background: #c89b5b !important;
+  color: #ffffff !important;
+}
+
+.product-details-page .back-to-products {
+  color: #a8793d !important;
+  text-decoration: none !important;
+}
+
+.product-details-page .back-to-products:hover {
+  color: #8f632e !important;
+}
+
+/* Back to Products - Premium Gold */
+.product-details-page .back-button {
+  color: #a8793d !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.product-details-page .back-button:hover {
+  color: #8f632e !important;
+  background: #f5ecdf !important;
+}

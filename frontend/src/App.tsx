@@ -9,8 +9,10 @@ import { useCart } from "./CartContext";
 import Orders from "./Orders";
 import Checkout from "./Checkout";
 import type { FormEvent } from "react";
-
-import heroImage from "./assets/hero.jpg";
+import CustomerRegister from "./CustomerRegister";
+import CustomerLogin from "./CustomerLogin";
+import MyOrders from "./pages/MyOrders";
+import heroImage from "./assets/premium-hero.png";
 interface Product {
   id: number;
   name: string;
@@ -44,6 +46,66 @@ function App() {
   const [token, setToken] = useState(
     () => localStorage.getItem("adminToken") || ""
   );
+  
+const [customer, setCustomer] = useState<{
+  name: string;
+  email: string;
+} | null>(() => {
+  const savedCustomer = localStorage.getItem("customerData");
+
+  if (!savedCustomer) return null;
+
+  try {
+    return JSON.parse(savedCustomer);
+  } catch {
+    return null;
+  }
+});
+
+useEffect(() => {
+  const syncCustomer = () => {
+    const savedCustomer = localStorage.getItem("customerData");
+
+    if (!savedCustomer) {
+      setCustomer(null);
+      return;
+    }
+
+    try {
+      setCustomer(JSON.parse(savedCustomer));
+    } catch {
+      setCustomer(null);
+    }
+  };
+
+  window.addEventListener("customerAuthChanged", syncCustomer);
+  window.addEventListener("storage", syncCustomer);
+
+  return () => {
+    window.removeEventListener("customerAuthChanged", syncCustomer);
+    window.removeEventListener("storage", syncCustomer);
+  };
+}, []);
+
+
+useEffect(() => {
+  const syncAdminAuth = () => {
+    setToken(localStorage.getItem("adminToken") || "");
+  };
+
+  window.addEventListener("adminAuthChanged", syncAdminAuth);
+
+  return () => {
+    window.removeEventListener("adminAuthChanged", syncAdminAuth);
+  };
+}, []);
+
+const handleCustomerLogout = () => {
+  localStorage.removeItem("customerToken");
+  localStorage.removeItem("customerData");
+  setCustomer(null);
+};
+
 
   const [showLogin, setShowLogin] = useState(false);
   const [username, setUsername] = useState("");
@@ -305,8 +367,14 @@ function App() {
       }
 
       // Save the JWT token in browser storage
-      localStorage.setItem("adminToken", data.token);
-      setToken(data.token);
+     
+localStorage.removeItem("customerToken");
+localStorage.removeItem("customerData");
+window.dispatchEvent(new Event("customerAuthChanged"));
+
+localStorage.setItem("adminToken", data.token);
+setToken(data.token);
+
 
       setPassword("");
       setUsername("");
@@ -489,6 +557,19 @@ function App() {
         <Route path="/checkout" element={<Checkout />} />
       <Route path="/product/:id" element={<ProductDetails />} />
       <Route
+  path="/customer-register"
+  element={<CustomerRegister />}
+/>
+
+<Route
+  path="/customer-login"
+  element={<CustomerLogin />}
+/>
+<Route
+  path="/my-orders"
+  element={<MyOrders />}
+/>
+      <Route
         path="*"
         element={
           <div>
@@ -514,6 +595,27 @@ function App() {
       </span>
     )}
   </Link>
+
+  
+{customer ? (
+  <>
+  <span className="welcome-user">
+      Welcome, {customer.name}
+    </span>
+      <Link to="/my-orders" className="my-orders-link">
+      My Orders
+    </Link>
+    <button type="button" onClick={handleCustomerLogout}>
+      Customer Logout
+    </button>
+  </>
+) : (
+  <>
+    <Link to="/customer-login">Customer Login</Link>
+    <Link to="/customer-register">Register</Link>
+  </>
+)}
+
           {token ? (
             <button onClick={handleLogout}>
               Admin Logout
@@ -586,12 +688,7 @@ function App() {
           </a>
         </div>
 
-        <div className="hero-image">
-          <img
-            src={heroImage}
-            alt="ProductHub shopping illustration"
-          />
-        </div>
+        <img src={heroImage} alt="ProductHub shopping illustration" />
       </section>
 
       {/* Admin Dashboard */}

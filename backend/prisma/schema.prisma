@@ -51,6 +51,8 @@ model order_items {
 
 model orders {
   id            Int      @id @default(autoincrement())
+  customer_id Int?
+customer    customers? @relation(fields: [customer_id], references: [id], onDelete: SetNull)
   customer_name String   @db.VarChar(100)
   email         String   @db.VarChar(150)
   phone         String   @db.VarChar(20)
@@ -62,4 +64,14 @@ model orders {
   status        String   @default("Pending") @db.VarChar(20)
 
   order_items order_items[]
+}
+
+
+model customers {
+  id            Int      @id @default(autoincrement())
+  name          String   @db.VarChar(100)
+  email         String   @unique(map: "customers_email_key") @db.VarChar(150)
+  password_hash String   @db.VarChar(255)
+  created_at    DateTime @default(now())
+  orders orders[]
 }

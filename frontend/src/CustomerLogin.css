@@ -1,0 +1,200 @@
+/* =========================================
+   PRODUCTHUB - CUSTOMER LOGIN
+   PREMIUM LUXURY THEME
+========================================= */
+
+.customer-auth-page {
+  min-height: 100vh;
+  padding: 70px 20px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: #f7f1e7;
+}
+
+/* Login Card */
+.customer-auth-card {
+  width: 100%;
+  max-width: 440px;
+
+  padding: 42px 38px;
+
+  background: #fffdf9;
+
+  border: 1px solid #eadcc9;
+  border-radius: 22px;
+
+  box-shadow: 0 15px 40px rgba(55, 40, 25, 0.10);
+
+  color: #292722;
+}
+
+/* Heading */
+.customer-auth-card h2 {
+  margin: 0 0 10px;
+
+  text-align: center;
+
+  color: #292722;
+
+  font-size: 30px;
+  font-weight: 800;
+}
+
+/* Description */
+.customer-auth-card > p {
+  margin: 0 0 28px;
+
+  text-align: center;
+
+  color: #6b6257;
+
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Form */
+.customer-auth-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+/* Labels */
+.customer-auth-card label {
+  margin-top: 7px;
+
+  color: #403a32;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Inputs */
+.customer-auth-card input {
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 14px 15px;
+
+  background: #fff;
+
+  border: 1px solid #dccdb9;
+  border-radius: 10px;
+
+  outline: none;
+
+  color: #292722;
+
+  font-size: 15px;
+
+  transition: all 0.25s ease;
+}
+
+.customer-auth-card input::placeholder {
+  color: #9a9186;
+}
+
+/* Input Focus */
+.customer-auth-card input:focus {
+  border-color: #a8793d;
+
+  box-shadow: 0 0 0 3px rgba(168, 121, 61, 0.12);
+}
+
+/* Error */
+.customer-auth-card .auth-error {
+  margin: 8px 0 2px;
+
+  padding: 10px 12px;
+
+  background: #fff1ef;
+
+  border: 1px solid #e7c5bf;
+  border-radius: 8px;
+
+  color: #a33a2b;
+
+  font-size: 14px;
+
+  text-align: left;
+}
+
+/* Login Button */
+.customer-auth-card form button {
+  margin-top: 14px;
+
+  padding: 14px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: #292722;
+  color: #fffdf9;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: all 0.25s ease;
+}
+
+.customer-auth-card form button:hover:not(:disabled) {
+  background: #a8793d;
+
+  transform: translateY(-1px);
+
+  box-shadow: 0 7px 18px rgba(168, 121, 61, 0.20);
+}
+
+/* Disabled Button */
+.customer-auth-card form button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Register Text */
+.customer-auth-card form + p {
+  margin-top: 25px;
+  margin-bottom: 0;
+
+  text-align: center;
+
+  color: #6b6257;
+}
+
+/* Register Link */
+.customer-auth-card a {
+  color: #a8793d;
+
+  font-weight: 700;
+
+  text-decoration: none;
+
+  transition: color 0.2s ease;
+}
+
+.customer-auth-card a:hover {
+  color: #8f632e;
+
+  text-decoration: underline;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .customer-auth-page {
+    padding: 40px 15px;
+  }
+
+  .customer-auth-card {
+    padding: 32px 24px;
+    border-radius: 18px;
+  }
+
+  .customer-auth-card h2 {
+    font-size: 26px;
+  }
+}
